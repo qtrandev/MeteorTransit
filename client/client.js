@@ -5,6 +5,11 @@ var busIcon = L.icon({
     iconSize: [44, 44],
     iconAnchor: [22, 22]
 });
+var busIconBlue = L.icon({
+    iconUrl: 'icons/icon-Bus-Tracker-blue.png',
+    iconSize: [44, 44],
+    iconAnchor: [22, 22]
+});
 var metroRailIcon = L.icon({
     iconUrl: 'icons/icon-Rail-Tracker.png',
     iconSize: [44, 44],
@@ -31,6 +36,7 @@ Template.map.rendered = function() {
   addMetroRail();
   addMdtBuses();
   addMetroRailRoutes();
+  loadBusTrackingGPSData();
 
   var query = Markers.find();
   query.observe({
@@ -189,4 +195,34 @@ function addMetroRailRoutes() {
 function addMetroRailRouteColors(latlngs, color) {
   var lineMarker = L.polyline(latlngs, {color: color});
   lineMarker.addTo(map);
+}
+
+function loadBusTrackingGPSData() {
+  $.getJSON(apiURL+'tracker.json',
+  function(data) {
+    var records = data.features;
+    var i = 0;
+    for (i = 0; i < records.length; i++) {
+      addBusTrackingGPSMarker(
+        records[i].properties.BusID,
+        records[i].properties.lat,
+        records[i].properties.lon,
+        records[i].properties.speed,
+        records[i].properties.bustime);
+    }
+  });
+}
+
+function addBusTrackingGPSMarker(BusID, lat, lon, speed, bustime) {
+  try {
+    var marker = L.marker([lat, lon], {icon: busIconBlue}).bindPopup(
+        '<strong>Bus Tracking GPS</strong>'+
+		    '<br /><br />Bus ID: ' +BusID+
+        '<br />Speed: ' +speed+ ' MPH'+
+        '<br />Bus Time: '+bustime,
+        { offset: new L.Point(0, -22) });
+    marker.addTo(map);
+  } catch (e) {
+    console.log("Cannot add marker in addBusTrackingGPSMarker. Lat: "+lat+" Lon: "+lon+" Error: "+e);
+  }
 }
